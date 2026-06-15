@@ -2,6 +2,7 @@
   "_comment": "harness.config.json — generated during blueprint bootstrap. Hooks and skills read from here. Edit directly when your setup changes.",
   "harness": {
     "version": "v20260614",
+    "semver": "1.0.0",
     "upstream": "https://github.com/wittkensis/claude-harness",
     "installed": "",
     "source": "blueprint-ew-v20260614"

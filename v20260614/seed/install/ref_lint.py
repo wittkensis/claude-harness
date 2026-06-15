@@ -86,6 +86,9 @@ def lint(skills_dir):
 
 
 def main(argv):
+    if len(argv) == 2 and argv[1] in ("-h", "--help"):
+        print(__doc__)
+        return 0
     if len(argv) > 2:
         print("usage: ref_lint.py [SKILLS_DIR]", file=sys.stderr)
         return 2

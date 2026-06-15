@@ -2,6 +2,24 @@
 
 ## v20260614 (current)
 
+### Install tooling + harness model (post-publish hardening)
+The v2 blueprint is still the adaptive install path, but its narrated steps are
+now backed by executable, testable tools in `seed/install/` so the install is
+verifiable instead of vibes:
+- `secret_scan.py` — gates the first commit against `.env`/keys/live API tokens (#97)
+- `ref_lint.py` — fails on dangling skill refs; intentional forward-pointers are
+  declared in each skill's `metadata.refs-external` (#101)
+- `merge.py` — install-mode detection (fresh/migration/merge) + superset-aware
+  file merge (keep-local when local ⊇ seed) + sentinel-preserving CLAUDE.md merge,
+  honoring a pre-existing `# BEGIN/END HARNESS` scheme (#99, #100, #104)
+- `token_replace.py` — resolves `{{harness.config.*}}` before files land (#103)
+- `verify.py` — the Step-4 gate: backlog callable, no placeholders, no dangling
+  refs, `.gitignore` present, sentinels, valid config (#102)
+- `harness.py` + `MODEL.md` — formal component model, semver, content-addressed
+  lockfile, portable `export`, and zero-step `bootstrap` from an artifact (#70)
+Also seeds working `state/backlog.py` + `state/learning-log.py` (#98) and a
+`seed/gitignore.template`; fixed `ericwittke`→`wittkensis` GitHub URLs (#105).
+
 ### Format: v1 → v2
 Complete reformat. v1 was a Python-installer kit (install.py, port-test.py, INTERVIEW.md + kit/). v2 is a Claude-native instruction document — the blueprint is addressed directly to the adopter's Claude and is self-sufficient without any installer script.
 

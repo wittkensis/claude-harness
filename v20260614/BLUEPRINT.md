@@ -319,6 +319,14 @@ Copy `seed/gitignore.template` to `~/.claude/.gitignore` (merge, not clobber —
 [ -f ~/.claude/.gitignore ] || cp seed/gitignore.template ~/.claude/.gitignore
 ```
 
+### 3g.2 Lock the harness model
+
+Write the content-addressed lockfile so the install is reproducible and diffable from day one (see `MODEL.md`). It records every component's sha256 + the harness semver.
+
+```bash
+python3 ~/.claude/HARNESS/install/harness.py lock --root ~/.claude
+```
+
 ### 3h. First git commit — gated against secrets
 
 **Never run the first commit blind.** Stage everything, then run the secret gate; only commit if it passes. The gate scans the staged set for `.env` files, private keys, and live API tokens (GitHub/AWS/Slack/OpenAI/Anthropic/Google + generic `secret=…` assignments).
@@ -525,6 +533,28 @@ done
 4. Advance `~/.claude/state/harness-audit-due` by ~1 month
 
 **Keep SKILLS.md as the routing source of truth.** The description field in each skill's frontmatter determines when Claude loads it — but SKILLS.md is where you see the full picture and tune it. If routing feels off, that's the first place to look.
+
+---
+
+## 2.6 — Modeling, Versioning & Transfer
+
+Your harness is a versioned artifact, not a pile of files. The model, lockfile, semver, export, and zero-step bootstrap are documented in **`MODEL.md`** and implemented in `seed/install/harness.py` (installed at `~/.claude/HARNESS/install/harness.py`).
+
+A harness = seven component kinds (`skills agents hooks state memory prompts`) + four singletons (`CLAUDE.md SKILLS.md harness.config.json .gitignore`). DBs and secrets are excluded by the model.
+
+```bash
+H=~/.claude/HARNESS/install/harness.py
+python3 $H model                       # inventory
+python3 $H lock                        # write harness.lock.json (sha256 per file)
+python3 $H version --bump minor        # semver lives in harness.config.json
+python3 $H export --out harness-$(python3 $H version).tar.gz   # portable artifact
+python3 $H verify  --artifact harness-X.Y.Z.tar.gz            # integrity check
+python3 $H bootstrap --artifact harness-X.Y.Z.tar.gz --root ~/.claude   # zero-step install
+```
+
+**Two distribution paths:** the *blueprint* (this document — adaptive install for a new person) vs. the *artifact* (`export`/`bootstrap` — reproducible bit-for-bit transfer of your own harness, lock-verified). See `MODEL.md §6`.
+
+Regenerate the lock whenever components change — bump semver, then `lock`, so `harness.lock.json` always describes the live harness.
 
 ---
 
