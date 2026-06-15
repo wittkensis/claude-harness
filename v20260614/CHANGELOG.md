@@ -31,7 +31,7 @@ v1 ported ~30 skills. v2 seeds exactly 12 — the discipline + universal build p
 **Changed: Distribution model**
 v1: copy the kit folder, run install.py. v2: Claude reads BLUEPRINT.md and self-installs. No Python installer, no intermediate scripts. The blueprint IS the installer.
 
-**Upstream: github.com/ericwittke/claude-harness**
+**Upstream: github.com/wittkensis/claude-harness**
 First version published to a public GitHub repo. Future versions will be tagged releases. Adopters can `curl` the latest BLUEPRINT.md to check for upgrades.
 
 ---

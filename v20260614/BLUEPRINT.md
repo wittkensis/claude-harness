@@ -235,12 +235,27 @@ Write `~/.claude/HARNESS/manifest.json`:
 }
 ```
 
-### 3h. First git commit
+### 3g.1 Seed the .gitignore (before the first commit)
+
+Copy `seed/gitignore.template` to `~/.claude/.gitignore` (merge, not clobber — see 3a's merge rule: if a `.gitignore` already exists, append the harness block above any existing lines and keep theirs). This is what stops `.env`, keys, and `state/*.db` from ever entering history.
+
+```bash
+[ -f ~/.claude/.gitignore ] || cp seed/gitignore.template ~/.claude/.gitignore
+```
+
+### 3h. First git commit — gated against secrets
+
+**Never run the first commit blind.** Stage everything, then run the secret gate; only commit if it passes. The gate scans the staged set for `.env` files, private keys, and live API tokens (GitHub/AWS/Slack/OpenAI/Anthropic/Google + generic `secret=…` assignments).
 
 ```bash
 git -C ~/.claude add -A
+python3 seed/install/secret_scan.py --staged-in ~/.claude || {
+  echo "Secret scan failed — unstage/remove the offenders, then re-run. NOT committing."; exit 1;
+}
 git -C ~/.claude commit -m "harness: bootstrap from blueprint-ew-v20260614"
 ```
+
+If the gate fires, it prints each offender as `file:line`. Move real secrets to `.env.local` or a secrets manager, confirm `.gitignore` covers them, re-stage, and re-run the gate before committing.
 
 ---
 
@@ -345,6 +360,11 @@ Never edit the content between these manually. Use `ops--blueprint-version` to u
 
 **Config source of truth:** `~/.claude/harness.config.json` — hooks and skills read from here. Edit it directly when your setup changes (new project, new deploy target, etc.).
 
+**Upstream-namespace convention (do not mix):**
+- **`wittkensis`** is the GitHub org/owner — use it for every `github.com/...` URL, `gh --repo`, and raw.githubusercontent path. The repo is `wittkensis/claude-harness`.
+- **`ericwittke`** is the *domain* (`*.ericwittke.com`) — use it only for deployed app hostnames in the fleet examples, never as a GitHub owner.
+  These two are deliberately distinct; `ericwittke/claude-harness` is always wrong.
+
 ---
 
 ## 2.3 — Extending the Harness
@@ -376,7 +396,7 @@ When you want to check for a newer blueprint version:
 
 ```bash
 # Fetch the latest BLUEPRINT.md from upstream
-curl -s https://raw.githubusercontent.com/ericwittke/claude-harness/main/BLUEPRINT.md | head -5
+curl -s https://raw.githubusercontent.com/wittkensis/claude-harness/main/BLUEPRINT.md | head -5
 ```
 
 The version header tells you if a newer version exists. Compare against your installed version in `~/.claude/HARNESS/manifest.json`.
