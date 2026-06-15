@@ -1,0 +1,50 @@
+{
+  "_comment": "Hook wiring for the portable harness. The bootstrap MERGES these arrays into the work ~/.claude/settings.json — it must not clobber existing hooks. $HOME is expanded by the shell that runs each command.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          { "type": "command", "command": "python3 $HOME/.claude/hooks/guard.py" }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "python3 $HOME/.claude/hooks/guard.py" },
+          { "type": "command", "command": "bash $HOME/.claude/hooks/commit-gate.sh" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": "bash $HOME/.claude/hooks/lint-fix.sh" }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash $HOME/.claude/hooks/session-context.sh" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash $HOME/.claude/hooks/stop-checklist.sh" }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "Bash|mcp__.*",
+        "hooks": [
+          { "type": "command", "command": "bash $HOME/.claude/hooks/auth-failure.sh" }
+        ]
+      }
+    ]
+  }
+}

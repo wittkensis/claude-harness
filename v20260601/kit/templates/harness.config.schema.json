@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "harness.config.json",
+  "description": "Machine-specific values the portable hooks read. Lives at ~/.claude/harness.config.json. Holds NO secret values — only paths, commands, and locators.",
+  "type": "object",
+  "properties": {
+    "version": { "type": "integer", "const": 1 },
+    "machine_label": {
+      "type": "string",
+      "description": "Free-text label for this machine, e.g. 'work-laptop'. Informational."
+    },
+    "project_roots": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Directories that contain per-project repos (each project = an immediate subdir). Used by session-context (CLAUDE.md surfacing) and tokens.py audit. e.g. ['~/work/repos'].",
+      "default": []
+    },
+    "protected_globs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Immutable paths. Any Edit/Write or write-ish Bash targeting a match is blocked by guard.py. e.g. ['~/data/raw/**'].",
+      "default": []
+    },
+    "secret_file_globs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Extra filename globs to treat like a real secret file (beyond the universal .env baseline guard.py already blocks).",
+      "default": []
+    },
+    "commit_gate": {
+      "type": "object",
+      "description": "Override the commit-gate's typecheck/test commands. Leave empty to auto-detect by project markers (package.json, pyproject.toml, Cargo.toml, go.mod).",
+      "properties": {
+        "typecheck": { "type": "string", "default": "" },
+        "test": { "type": "string", "default": "" }
+      },
+      "additionalProperties": false
+    },
+    "lint_fix": {
+      "type": "object",
+      "description": "Per-file format-on-edit. command is a template; '{file}' is replaced with the edited path. Empty = auto-detect (eslint/ruff/black/rustfmt/gofmt).",
+      "properties": { "command": { "type": "string", "default": "" } },
+      "additionalProperties": false
+    },
+    "token_registry_path": {
+      "type": "string",
+      "description": "Where tokens.py stores its METADATA-ONLY registry.",
+      "default": "~/.claude/token-registry.json"
+    },
+    "token_target_types": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "The sync-target types this machine uses, for the token-rotation skill. e.g. ['env','ci-secret','deploy-env','console'].",
+      "default": ["env", "ci-secret", "deploy-env", "console"]
+    },
+    "deploy": {
+      "type": "object",
+      "description": "Deploy adapter — fills the generic `deploy` skill. No secret values.",
+      "properties": {
+        "deploy_target": { "type": "string", "description": "e.g. vercel | fly | netlify | k8s | ssh:<host> | none" },
+        "secrets_store": { "type": "string", "description": "e.g. gh-secrets | vault | aws-sm | doppler | platform-env" },
+        "domain_provider": { "type": "string", "description": "e.g. cloudflare | route53 | namecheap | none" },
+        "ci": { "type": "string", "description": "e.g. github-actions | gitlab-ci | none" }
+      },
+      "additionalProperties": true
+    },
+    "git_host": {
+      "type": "string",
+      "description": "e.g. github | gitlab | bitbucket | azure-devops. Informational for skills.",
+      "default": ""
+    }
+  },
+  "required": ["version"],
+  "additionalProperties": true
+}

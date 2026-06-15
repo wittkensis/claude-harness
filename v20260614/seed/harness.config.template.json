@@ -1,0 +1,33 @@
+{
+  "_comment": "harness.config.json — generated during blueprint bootstrap. Hooks and skills read from here. Edit directly when your setup changes.",
+  "harness": {
+    "version": "v20260614",
+    "upstream": "https://github.com/wittkensis/claude-harness",
+    "installed": "",
+    "source": "blueprint-ew-v20260614"
+  },
+  "user": {
+    "name": "",
+    "email": "",
+    "goals": []
+  },
+  "projects": [
+    {
+      "name": "",
+      "path": "",
+      "stacks": [],
+      "deploy_target": ""
+    }
+  ],
+  "deploy": {
+    "target": "",
+    "secrets_store": "",
+    "domain_provider": ""
+  },
+  "git": {
+    "remote_provider": "github",
+    "default_branch": "main"
+  },
+  "protected_paths": [],
+  "skill_scope": "system-wide"
+}
