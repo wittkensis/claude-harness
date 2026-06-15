@@ -171,6 +171,17 @@ both gitignored). Don't replace a richer local copy: the merge rule (3c) applies
 if the user already has a `backlog.py`, keep theirs unless this seed adds commands
 they lack.
 
+### 3b.2 Token pass (resolve `{{harness.config.*}}` before files land)
+
+Seed files carry placeholders like `{{harness.config.projects[0].path}}` and `{{harness.config.user.name}}`. Now that `harness.config.json` exists (3b), resolve them against it — substitute first, then write the file to its destination. Run the pass on the installed copies after each copy step:
+
+```bash
+python3 seed/install/token_replace.py --config ~/.claude/harness.config.json \
+  ~/.claude/skills/*/SKILL.md ~/.claude/CLAUDE.md
+```
+
+The tool resolves dotted (`user.name`) and indexed (`projects[0].path`) paths, drops `_comment` keys, leaves a genuinely-absent value as a visible token, and warns on any leftover. Step 4 re-checks that **no** `{{...}}` token survives in any installed file — so a missing config value fails verification loudly instead of shipping a raw placeholder.
+
 ### 3c. Install seed skills
 
 Copy the 12 skills from `seed/skills/` into `~/.claude/skills/`.
@@ -290,6 +301,16 @@ Write `~/.claude/HARNESS/manifest.json`:
 }
 ```
 
+### 3g.0 Install the harness tooling (so runtime checks can find it)
+
+Copy `seed/install/` into `~/.claude/HARNESS/install/`. The `done-check.py` hook calls `ref_lint.py` from there at turn-end, and you'll re-run `verify.py` on future upgrades:
+
+```bash
+mkdir -p ~/.claude/HARNESS/install
+cp seed/install/*.py ~/.claude/HARNESS/install/
+chmod +x ~/.claude/HARNESS/install/*.py
+```
+
 ### 3g.1 Seed the .gitignore (before the first commit)
 
 Copy `seed/gitignore.template` to `~/.claude/.gitignore` (merge, not clobber — see 3a's merge rule: if a `.gitignore` already exists, append the harness block above any existing lines and keep theirs). This is what stops `.env`, keys, and `state/*.db` from ever entering history.
@@ -316,7 +337,22 @@ If the gate fires, it prints each offender as `file:line`. Move real secrets to 
 
 ## Step 4 — Verification
 
-Run each check and report pass/fail to the user.
+First run the mechanical gate — it is the source of truth, not a vibe check. It fails the whole install if any item is broken:
+
+```bash
+python3 seed/install/verify.py --claude-dir ~/.claude
+```
+
+It checks, and FAILS loudly on any miss:
+1. `state/backlog.py` present **and callable** (`--help` exits 0)
+2. `state/learning-log.py` present and callable
+3. **No `{{placeholder}}` tokens** survive in any installed file (catches a missed token pass / absent config value)
+4. **No dangling skill refs** (delegates to `ref_lint.py` from #101)
+5. `.gitignore` present
+6. CLAUDE.md sentinels == 2 (BEGIN + END)
+7. `harness.config.json` is valid JSON
+
+Only if `verify.py` exits 0, run the judgment checks below and report all results to the user.
 
 **Check 1 — Skills discoverable**
 Ask yourself: list the 5 task cycle phases and name one installed skill for each. If you can't, the routing table needs work.

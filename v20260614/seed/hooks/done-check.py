@@ -8,7 +8,7 @@ One checker, called by BOTH gates so they never drift:
 Detects project context from a directory and runs the right checks:
   - js      : tsc --noEmit (if tsconfig+tsc) + npm test (if a test script exists)
   - python  : ruff check (if ruff present) + pytest (if tests + pytest present)
-  - harness : ref-check.py + skill-lint.py (report-only; never blocks)
+  - harness : ref_lint.py (dangling skill refs) — report-only; never blocks
   - none    : nothing to check
 
 Add your own linters to check_harness() as your harness grows.
@@ -105,9 +105,10 @@ def check_harness(root: Path) -> list[str]:
     """Report-only: harness linters surface drift but never hard-block a turn.
     Add your own linters below as your harness grows."""
     notes: list[str] = []
+    ref_lint = HOME / ".claude" / "HARNESS" / "install" / "ref_lint.py"
+    skills_dir = HOME / ".claude" / "skills"
     for name, cmd in (
-        ("ref-check", ["python3", str(HOME / ".claude" / "ref-check.py")]),
-        ("skill-lint", ["python3", str(HOME / ".claude" / "skill-lint.py")]),
+        ("ref_lint", ["python3", str(ref_lint), str(skills_dir)]),
         # Add project-specific linters here:
         # ("my-linter", ["python3", str(HOME / "myproject" / ".claude" / "my-linter.py")]),
     ):
@@ -139,7 +140,7 @@ def main() -> int:
             for n in notes:
                 print("  -", n)
         elif not args.quiet:
-            print("done-check (harness): ref-check + skill-lint clean.")
+            print("done-check (harness): ref_lint clean.")
         return 0  # harness is report-only, never blocks
 
     fails = check_js(root) if kind == "js" else check_python(root)
