@@ -6,6 +6,12 @@ metadata:
   status: active
   modified: 2026-06-10
   source: blueprint-ew-v20260614
+  refs-external:    # intentional forward-pointers; not seeded (see ref_lint.py)
+    - build--caching
+    - build--react
+    - fleet--app-lifecycle
+    - plan--setup
+    - write--documentation
 ---
 
 # Version Numbering

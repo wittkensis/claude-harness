@@ -6,6 +6,10 @@ metadata:
   kind: playbook
   modified: 2026-06-11
   source: blueprint-ew-v20260614
+  refs-external:    # intentional forward-pointers; not seeded (see ref_lint.py)
+    - fleet--app-lifecycle
+    - log--issues
+    - plan--prd
 ---
 
 # ops--backlog — The Backlog

@@ -5,6 +5,11 @@ metadata:
   status: active
   modified: 2026-06-10
   source: blueprint-ew-v20260614
+  refs-external:    # intentional forward-pointers; not seeded (see ref_lint.py)
+    - audit--drift
+    - audit--improve-codebase-architecture
+    - log--audit-results
+    - write--documentation
 ---
 
 # Slop Audit
