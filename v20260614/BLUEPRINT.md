@@ -56,10 +56,23 @@ ls ~/.claude/hooks/ 2>/dev/null | wc -l || echo "0"
 [ -f ~/.claude/CLAUDE.md ] && echo "CLAUDE.md: EXISTS" || echo "CLAUDE.md: NONE"
 ```
 
-Present the summary to the user in plain language:
-> "Here's what I found on this machine: [findings]. I'm going to install a Claude Code harness that will add [N] skills, [N] hooks, extend your CLAUDE.md, and initialize a git repo in `~/.claude`. Nothing will be overwritten without showing you a diff first. Ready to continue?"
+Then run the install-mode detector — it turns "is there already a harness here?" into a deterministic answer:
 
-**Gate: Wait for user acknowledgment before proceeding.**
+```bash
+python3 seed/install/merge.py detect-mode --json
+```
+
+It returns one of three modes:
+- **fresh** — `~/.claude` is empty or has no harness/skill content. Clean install.
+- **migration** — content exists (skills/git) but no harness markers — an old/foreign structure. Migration replaces the old structure; confirm scope with the user first.
+- **merge** *(default when prior harness content is found)* — keep the user's local additions; only add/update what the seed brings. Non-destructive.
+
+Present the summary to the user in plain language, naming the detected mode:
+> "Here's what I found on this machine: [findings]. Detected install mode: **[mode]** ([reason]). I'm going to install a Claude Code harness that will add [N] skills, [N] hooks, extend your CLAUDE.md, and initialize a git repo in `~/.claude`. Nothing will be overwritten without showing you a diff first — and where your local file already contains everything the seed has, I'll keep yours. Ready to continue?"
+
+If the user wants a different mode than detected (e.g. force **fresh** over an old structure), honor their choice — the detector is a recommendation, not a lock.
+
+**Gate: Wait for user acknowledgment of the mode and plan before proceeding.**
 
 ---
 
@@ -162,9 +175,18 @@ they lack.
 
 Copy the 12 skills from `seed/skills/` into `~/.claude/skills/`.
 
-**Merge rule:** For each skill, check if a file already exists at that path.
-- If no conflict: copy directly.
-- If conflict: show a diff and ask: "This skill already exists. Replace / merge / skip?"
+**Merge rule (superset-aware — let the tool decide, don't eyeball it):** For each skill, run
+
+```bash
+python3 seed/install/merge.py merge-file seed/skills/<name>/SKILL.md ~/.claude/skills/<name>/SKILL.md
+```
+
+It returns one of:
+- **overwrite** — no local file, or the seed is a superset of the local — safe to install (add `--apply`).
+- **keep-local** — the local file already contains everything the seed has (a superset) — *do not overwrite*; the user has the seed content plus their own edits.
+- **merge-append** — local and seed have diverged (each has content the other lacks). The tool writes a `*.seed-new` alongside and leaves the local untouched; show the user the diff and ask: "Replace / merge / skip?"
+
+The principle: **never clobber a local file that's a superset of the seed.** Only overwrite when the seed brings content the local lacks.
 
 Each copied skill already has `metadata.source: blueprint-ew-v20260614` in its frontmatter — do not remove this line. It's the provenance marker.
 
@@ -223,13 +245,28 @@ Read `seed/claude-discipline.md` from this blueprint. It contains the harness di
 # [harness:ew] END
 ```
 
-**Merge rule:**
-- If `~/.claude/CLAUDE.md` already has `[harness:ew]` sentinels: replace the block between them with the new version.
-- If not: append the discipline block to the end of their existing CLAUDE.md. Never insert before their existing content.
-- If they have no CLAUDE.md: create one with just the discipline block, then invite them to add their goals above the sentinel.
+**Merge rule (sentinel-preserving — run the tool, don't hand-edit the file):**
+
+```bash
+python3 seed/install/merge.py merge-sentinel seed/claude-discipline.md ~/.claude/CLAUDE.md --apply
+```
+
+The tool handles all three cases, preserving the user's content in every one:
+- **Existing `[harness:ew]` sentinels** — replaces *only* the fenced block; content **before and after** the sentinels is kept verbatim (so an upgrade never disturbs the user's goals, footers, or notes around it).
+- **No sentinels** — appends the discipline block after the existing content. Never inserts before it.
+- **No CLAUDE.md** — creates one containing just the discipline block; invite the user to add their goals above the BEGIN sentinel.
+
+If the user's CLAUDE.md uses a *different* sentinel scheme (e.g. `# BEGIN HARNESS` / `# END HARNESS`), pass it through so their boundaries are respected rather than a second block appended:
+
+```bash
+python3 seed/install/merge.py merge-sentinel seed/claude-discipline.md ~/.claude/CLAUDE.md \
+  --begin '#\s*BEGIN HARNESS' --end '#\s*END HARNESS' --apply
+```
+
+Run without `--apply` first to preview the merged result on stdout.
 
 Tell the user:
-> "I'll extend your CLAUDE.md with the harness discipline block (approach principles, task cycle, naming conventions, agents table). Your existing content is completely untouched — the new content is appended after it and wrapped in sentinel markers so future upgrades can find and replace it cleanly. Proceed?"
+> "I'll extend your CLAUDE.md with the harness discipline block (approach principles, task cycle, naming conventions, agents table). Your existing content is completely untouched — only the harness-managed section between the sentinels changes, and everything above and below it stays exactly as you wrote it. Proceed?"
 
 ### 3f. Generate SKILLS.md
 
