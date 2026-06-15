@@ -140,6 +140,24 @@ Tell the user: "I'll initialize git in `~/.claude` so the harness has a local hi
 
 Write the confirmed config from Step 2c to `~/.claude/harness.config.json`.
 
+### 3b.1 Install state tooling
+
+Copy the operational state tools from `seed/state/` into `~/.claude/state/`:
+
+```bash
+mkdir -p ~/.claude/state
+cp seed/state/backlog.py      ~/.claude/state/backlog.py
+cp seed/state/learning-log.py ~/.claude/state/learning-log.py
+chmod +x ~/.claude/state/*.py
+```
+
+These are the SQLite-backed work queue and learnings log that `ops--backlog`,
+`ops--session-start`, and the hooks call. They're minimal and self-contained —
+they create their own DB on first run (`state/backlog.db`, `state/learning-log.db`,
+both gitignored). Don't replace a richer local copy: the merge rule (3c) applies —
+if the user already has a `backlog.py`, keep theirs unless this seed adds commands
+they lack.
+
 ### 3c. Install seed skills
 
 Copy the 12 skills from `seed/skills/` into `~/.claude/skills/`.
