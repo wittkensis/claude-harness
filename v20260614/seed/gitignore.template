@@ -1,0 +1,37 @@
+# [harness:ew] v20260614 — seeded .gitignore for ~/.claude
+# Prevents secrets and machine-local cruft from ever entering the harness git history.
+# Safe to extend below the sentinel; the harness upgrader only manages the block above it.
+
+# --- secrets (NEVER commit) ---
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+*.token
+*credentials*.json
+secrets.json
+secrets.yaml
+secrets.yml
+
+# --- harness runtime state (machine-local) ---
+state/*.db
+state/*.db-wal
+state/*.db-shm
+HARNESS/deferq.json
+*.log
+
+# --- OS / editor cruft ---
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+*.swp
